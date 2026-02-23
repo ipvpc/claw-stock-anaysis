@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: stock_analysis
+      POSTGRES_USER: stock
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stock}
+    ports:
+      - "54331:5432"
+    volumes:
+      - stock_analysis_db:/var/lib/postgresql/data
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://stock:${POSTGRES_PASSWORD:-stock}@db:5432/stock_analysis}
+      SEC_USER_AGENT: ${SEC_USER_AGENT:-stock-analysis/0.1 (contact: you@example.com)}
+      BASIC_AUTH_USER: ${BASIC_AUTH_USER:-admin}
+      BASIC_AUTH_PASS: ${BASIC_AUTH_PASS}
+    depends_on:
+      - db
+    ports:
+      - "8356:8356"
+    command: ["uvicorn", "api_server:app", "--host", "0.0.0.0", "--port", "8356"]
+
+volumes:
+  stock_analysis_db:
